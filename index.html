@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+p<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -366,7 +366,7 @@ function tampilkanHasil(json) {
     if (duplikat) {
       html += '<div class="peringatan">'
         + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5" style="flex:none"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/></svg>'
-        + '<div><b>Peringatan:</b> Label ini sudah discan ' + d.totalScan + ' kali — melebihi batas wajar. Kemungkinan label dipalsukan atau diduplikasi. Hubungi kami via WhatsApp untuk konfirmasi.</div></div>';
+        + '<div><b>Peringatan:</b> Label ini sudah discan ' + d.totalScan + ' kali — melebihi batas wajar. Hubungi kami via WhatsApp untuk konfirmasi.</div></div>';
     }
   } else if (json.status === 'found') {
     html += '<div class="status-badge status-stok">'
