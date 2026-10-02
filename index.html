@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DLPNM Merch — Cek Keaslian Produk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root{ --hitam:#000000; --putih:#FFFFFF; --abu:#F7F7F7; --garis:#E5E5E5; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{font-family:'Space Grotesk',sans-serif;background:var(--abu);color:var(--hitam);line-height:1.6}
+
+  /* ============ HEADER ============ */
+  header{background:var(--putih);border-bottom:1.5px solid var(--hitam);position:sticky;top:0;z-index:40}
+  .nav{max-width:960px;margin:0 auto;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-mark{width:34px;height:34px;border:1.5px solid var(--hitam);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;letter-spacing:-.02em}
+  .brand-name{font-weight:700;font-size:16px;letter-spacing:.12em;text-transform:uppercase}
+  .nav-link{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--hitam);text-decoration:none;border:1.5px solid var(--hitam);padding:8px 14px}
+  .nav-link:hover{background:var(--hitam);color:var(--putih)}
+
+  /* ============ HERO ============ */
+  .hero{background:var(--putih)}
+  .hero-in{max-width:960px;margin:0 auto;padding:72px 20px 56px}
+  .hero-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;border:1.5px solid var(--hitam);padding:6px 12px;margin-bottom:22px}
+  h1{font-size:clamp(42px,11vw,84px);font-weight:700;line-height:.98;letter-spacing:-.03em;margin-bottom:18px}
+  h1 .outline{color:transparent;-webkit-text-stroke:1.5px var(--hitam)}
+  .hero-sub{font-size:16px;color:#555;max-width:46ch;margin-bottom:30px}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{font-family:inherit;font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+    padding:14px 22px;border:1.5px solid var(--hitam);background:var(--putih);color:var(--hitam);cursor:pointer;
+    display:inline-flex;align-items:center;gap:10px;text-decoration:none;transition:background .15s,color .15s}
+  .btn:hover{background:var(--hitam);color:var(--putih)}
+  .btn-utama{background:var(--hitam);color:var(--putih)}
+  .btn-utama:hover{background:#222}
+
+  /* ============ SECTION UMUM ============ */
+  section{max-width:960px;margin:0 auto;padding:56px 20px}
+  .sec-label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#777;margin-bottom:10px}
+  .sec-title{font-size:clamp(28px,6vw,44px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-bottom:34px}
+
+  /* ============ KARTU VERIFIKASI (PUTIH BERSIH) ============ */
+  .verify-card{background:var(--putih);border:1.5px solid var(--hitam);padding:28px;box-shadow:8px 8px 0 var(--hitam)}
+  .verify-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .verify-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .verify-desc{font-size:14px;color:#666;margin-bottom:22px}
+  .langkah{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+  .langkah span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--garis);padding:6px 10px;color:#777}
+  .langkah span.on{border-color:var(--hitam);color:var(--hitam);background:var(--abu)}
+  .tombol{display:flex;gap:12px;flex-wrap:wrap}
+  #reader{width:100%;border:1.5px solid var(--garis);margin-top:18px;display:none;background:var(--abu)}
+  #reader video,#reader img{width:100%!important}
+  .loading{display:none;align-items:center;gap:10px;font-size:14px;padding:14px 0}
+  .spinner{width:16px;height:16px;border:2px solid var(--garis);border-top-color:var(--hitam);border-radius:50%;animation:putar .7s linear infinite}
+  @keyframes putar{to{transform:rotate(360deg)}}
+  .notice{font-size:14px;padding:14px 16px;border:1.5px solid var(--hitam);margin-bottom:18px;display:none;background:var(--abu)}
+  .notice b{display:block;margin-bottom:2px}
+
+  /* ============ HASIL ============ */
+  #hasil{display:none;margin-top:22px}
+  .hasil-kartu{border:1.5px solid var(--hitam);padding:26px;background:var(--abu)}
+  .status-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;padding:7px 13px;margin-bottom:16px}
+  .status-asli{background:var(--hitam);color:var(--putih)}
+  .status-stok{border:1.5px solid var(--hitam);color:var(--hitam)}
+  .status-palsu{background:var(--hitam);color:var(--putih)}
+  .hasil-kartu h3{font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.01em;margin-bottom:18px}
+  .data-baris{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid var(--garis);font-size:15px}
+  .data-baris span:first-child{color:#777;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding-top:4px}
+  .data-baris span:last-child{font-weight:500;text-align:right}
+  .peringatan{margin-top:18px;padding:14px 16px;border:1.5px solid var(--hitam);font-size:14px;display:flex;gap:12px;align-items:flex-start;background:var(--putih)}
+
+  /* ============ CARE GUIDE (GRID 3 KOLOM) ============ */
+  .care{background:var(--putih);border-top:1.5px solid var(--hitam)}
+  .care-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--garis);border:1px solid var(--garis)}
+  .care-item{background:var(--putih);padding:26px 22px}
+  .care-item svg{margin-bottom:14px}
+  .care-item b{display:block;font-size:15px;margin-bottom:6px}
+  .care-item p{font-size:13px;color:#666;line-height:1.55}
+  @media(max-width:720px){.care-grid{grid-template-columns:1fr}}
+
+  /* ============ FOOTER ============ */
+  footer{background:var(--hitam);color:var(--putih)}
+  .footer-in{max-width:960px;margin:0 auto;padding:56px 20px 90px}
+  .footer-brand{font-size:clamp(30px,7vw,52px);font-weight:700;letter-spacing:-.02em;line-height:1;margin-bottom:14px}
+  .footer-sub{font-size:14px;color:#999;max-width:40ch;margin-bottom:34px}
+  .footer-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;border-top:1px solid #333;padding-top:28px}
+  @media(max-width:600px){.footer-grid{grid-template-columns:1fr}}
+  .footer-grid h4{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#888;margin-bottom:14px}
+  .cp{font-size:14px;color:var(--putih);margin-bottom:6px}
+  .cp span{color:#888}
+  .sosmed{display:flex;gap:10px;flex-wrap:wrap}
+  .sosmed a{border:1.5px solid #555;color:var(--putih);padding:11px 16px;display:inline-flex;align-items:center;gap:9px;
+    font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+  .sosmed a:hover{background:var(--putih);color:var(--hitam);border-color:var(--putih)}
+  .sosmed a:hover svg{stroke:var(--hitam)}
+  .copy{margin-top:34px;font-size:12px;color:#666;border-top:1px solid #333;padding-top:20px}
+
+  /* ============ FLOATING CHAT WHATSAPP ============ */
+  .chat-float{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:0;
+    background:var(--hitam);color:var(--putih);border:1.5px solid var(--hitam);cursor:pointer;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .15s;max-width:52vw;overflow:hidden}
+  .chat-float:hover{transform:translateY(-3px)}
+  .chat-float .bubble{font-size:12px;font-weight:700;letter-spacing:.04em;padding:0 14px 0 16px;white-space:nowrap;
+    max-width:44vw;overflow:hidden;text-overflow:ellipsis;animation:muncul .3s ease}
+  @keyframes muncul{from{opacity:0;max-width:0;padding:0}to{opacity:1;max-width:44vw}}
+  .chat-float .icon{width:52px;height:52px;background:var(--putih);display:flex;align-items:center;justify-content:center;flex:none}
+  .chat-float .icon svg{stroke:var(--hitam)}
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<header>
+  <div class="nav">
+    <div class="brand">
+      <div class="brand-mark">D</div>
+      <div class="brand-name">DLPNM&nbsp;MERCH</div>
+    </div>
+    <a class="nav-link" href="#cek">Cek Produk</a>
+  </div>
+</header>
+
+<!-- ==================== HERO ==================== -->
+<div class="hero">
+  <div class="hero-in">
+    <div class="hero-tag">Official Merchandise</div>
+    <h1>ASLI<br><span class="outline">ATAU</span><br>PALSU?</h1>
+    <p class="hero-sub">Setiap produk DLPNM Merch punya QR Code identitas unik. Pindai dua kali untuk membuka data keaslian produk Anda — langsung dari database resmi kami.</p>
+    <div class="hero-cta">
+      <a class="btn btn-utama" href="#cek">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18"/></svg>
+        Cek Sekarang
+      </a>
+      <a class="btn" href="#perawatan">Tips Perawatan</a>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VERIFIKASI ==================== -->
+<section id="cek">
+  <div class="sec-label">Verifikasi</div>
+  <div class="sec-title">Cek Keaslian Produk</div>
+
+  <div class="notice" id="notice-tahap1">
+    <b>QR Code terdeteksi.</b>
+    Data masih terkunci. Pindai ulang QR Code pada label produk — lewat kamera halaman ini atau unggah fotonya — untuk membuka data keaslian.
+  </div>
+
+  <div class="verify-card">
+    <div class="verify-head">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><path d="M12 2l7 3v6c0 4.4-3 8.4-7 11-4-2.6-7-6.6-7-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
+      <h2>Pemindai Keaslian</h2>
+    </div>
+    <p class="verify-desc">Tahap 1 selesai saat Anda memindai QR dengan kamera HP dan masuk ke halaman ini. Lanjutkan tahap 2 di bawah.</p>
+
+    <div class="langkah">
+      <span class="on">1 · Kamera HP</span>
+      <span id="tag-tahap2">2 · Pindai Ulang</span>
+    </div>
+
+    <div class="tombol">
+      <button class="btn btn-utama" id="btn-kamera" onclick="bukaKamera()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Scan dengan Kamera
+      </button>
+      <button class="btn" onclick="document.getElementById('file-qr').click()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Upload Gambar
+      </button>
+      <input type="file" id="file-qr" accept="image/*" hidden onchange="prosesFile(this)">
+    </div>
+
+    <div id="reader"></div>
+    <div class="loading" id="loading"><div class="spinner"></div> Memverifikasi ke database resmi…</div>
+  </div>
+
+  <!-- HASIL -->
+  <div id="hasil">
+    <div class="hasil-kartu" id="kartu-hasil"></div>
+  </div>
+</section>
+
+<!-- ==================== CARE GUIDE (3 KOLOM) ==================== -->
+<div class="care" id="perawatan">
+  <section>
+    <div class="sec-label">Perawatan</div>
+    <div class="sec-title">Tips Perawatan Produk</div>
+    <div class="care-grid">
+      <div class="care-item">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.2"><path d="M12 2s6 7.4 6 12a6 6 0 0 1-12 0c0-4.6 6-12 6-12z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg>
+        <b>Cuci Dingin &amp; Balik</b>
+        <p>Cuci dengan air dingin dan mesin mode lembut. Balik pakaian sebelum dicuci agar sablon lebih awet dan warna tidak pudar.</p>
+      </div>
+      <div class="care-item">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.2"><path d="M4 3h16v14H4z"/><path d="M8 21h8M12 17v4"/><path d="M8 8h8M8 11h8"/></svg>
+        <b>Hindari Setrika Sablon</b>
+        <p>Setrika sisi dalam pakaian atau gunakan kain pelapis. Suhu tinggi langsung pada area sablon dapat merusak lapisan cetak.</p>
+      </div>
+      <div class="care-item">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.2"><path d="M12 3v10"/><path d="M8 9l4 4 4-4"/><path d="M4 17c2 2 4 3 8 3s6-1 8-3"/></svg>
+        <b>Jemur di Tempat Teduh</b>
+        <p>Jemur terbalik di tempat teduh. Hindari sinar matahari langsung dan pemutih klorin agar warna tetap pekat.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="footer-in">
+    <div class="footer-brand">DLPNM MERCH.</div>
+    <p class="footer-sub">Merchandise resmi dengan sistem verifikasi keaslian berbasis QR Code. Setiap produk terdaftar dan terlacak di database kami.</p>
+
+    <div class="footer-grid">
+      <div>
+        <h4>Contact Person</h4>
+        <p class="cp">DLPNM Merch <span>· Official Store</span></p>
+        <p class="cp"><span>WhatsApp ·</span> +62 851-8224-7816</p>
+        <p class="cp"><span>Instagram ·</span> @dlpnmmerch</p>
+        <p class="cp"><span>TikTok ·</span> @dlpnmmerch</p>
+      </div>
+      <div>
+        <h4>Sosial Media</h4>
+        <div class="sosmed">
+          <a href="https://www.instagram.com/dlpnmmerch" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#fff"/></svg>
+            Instagram
+          </a>
+          <a href="https://www.tiktok.com/@dlpnmmerch" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 5c1 2.5 3 3.8 6 4"/></svg>
+            TikTok
+          </a>
+          <a href="https://wa.me/6285182247816" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 21l2-5.6A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 9.5c.5 3 3 5.5 6 6"/></svg>
+            WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="copy">© 2026 DLPNM Merch · Sistem Verifikasi Produk Resmi</div>
+  </div>
+</footer>
+
+<!-- ==================== FLOATING CHAT WHATSAPP ==================== -->
+<a class="chat-float" href="https://wa.me/6285182247816?text=Halo%20DLPNM%20Merch%2C%20saya%20ingin%20bertanya%20tentang%20produk" target="_blank" rel="noopener" aria-label="Chat WhatsApp">
+  <span class="bubble">Butuh bantuan? Chat kami</span>
+  <span class="icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 21l2-5.6A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 9.5c.5 3 3 5.5 6 6"/><path d="M9 8.5c0 4 2.5 6.5 6.5 6.5"/></svg>
+  </span>
+</a>
+
+<script>
+/* ================================================================
+   KONFIGURASI — WAJIB DIGANTI dengan URL Web App Google Apps Script
+   ================================================================ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxU3hDDZ3x0nO_F5nI3yn0D0EKk5pnkSnBG9WYnmMv9p-b5kQvvnGya4vrGBWt4kxQh/exec';
+const BATAS_SCAN_WAJAR = 3;
+
+let scanner = null;
+let kameraAktif = false;
+
+/* ---- TAHAP 1: tangkap ?id= dari URL lalu sembunyikan dari address bar ---- */
+(function tahapSatu() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if (id) {
+    sessionStorage.setItem('qr_tahap1', id);
+    // Hapus parameter dari address bar — data "ditahan", belum ditampilkan
+    window.history.replaceState({}, document.title, location.pathname);
+    document.getElementById('notice-tahap1').style.display = 'block';
+    document.getElementById('tag-tahap2').classList.add('on');
+  }
+})();
+
+/* ---- Ekstrak ID dari teks/URL hasil scan QR ---- */
+function ekstrakId(teks) {
+  teks = String(teks).trim();
+  try {
+    const u = new URL(teks);
+    if (u.searchParams.get('id')) return u.searchParams.get('id');
+  } catch (e) {}
+  const m = teks.match(/[?&]id=([^&\s]+)/i);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+/* ---- Kamera di dalam web (tahap 2) ---- */
+function bukaKamera() {
+  const el = document.getElementById('reader');
+  el.style.display = 'block';
+  scanner = new Html5Qrcode('reader');
+  scanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 240, height: 240 } },
+    (teks) => { matikanKamera(); jalankanVerifikasi(ekstrakId(teks)); },
+    () => {}
+  ).then(() => { kameraAktif = true; }).catch(() => {
+    alert('Tidak bisa membuka kamera. Pastikan izin kamera diizinkan, atau gunakan tombol Upload Gambar.');
+    el.style.display = 'none';
+  });
+}
+
+function matikanKamera() {
+  if (scanner && kameraAktif) {
+    scanner.stop().then(() => {
+      scanner.clear(); kameraAktif = false;
+      document.getElementById('reader').style.display = 'none';
+    }).catch(() => { kameraAktif = false; });
+  }
+}
+
+/* ---- Upload foto QR dari galeri (tahap 2, alternatif) ---- */
+function prosesFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  matikanKamera();
+  const el = document.getElementById('reader');
+  el.style.display = 'none';
+  new Html5Qrcode('reader').scanFile(file, true)
+    .then((teks) => { jalankanVerifikasi(ekstrakId(teks)); })
+    .catch(() => { alert('QR Code tidak terbaca dari foto. Coba ambil foto lebih dekat dan lebih jelas.'); });
+  input.value = '';
+}
+
+/* ---- TAHAAP 2: verifikasi ke backend ---- */
+async function jalankanVerifikasi(id) {
+  if (!id) { alert('QR terbaca, tetapi tidak berisi kode produk yang valid.'); return; }
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('hasil').style.display = 'none';
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify', id: id })
+    });
+    const json = await res.json();
+    tampilkanHasil(json);
+  } catch (e) {
+    alert('Gagal terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.');
+  }
+  document.getElementById('loading').style.display = 'none';
+}
+
+function tampilkanHasil(json) {
+  const kartu = document.getElementById('kartu-hasil');
+  const wrap  = document.getElementById('hasil');
+  let html = '';
+
+  if (json.status === 'found' && json.ownerFilled) {
+    const d = json.data;
+    const duplikat = d.totalScan > BATAS_SCAN_WAJAR;
+    html += '<div class="status-badge status-asli">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>'
+      + 'Produk Asli &amp; Terdaftar</div>';
+    html += '<h3>' + esc(d.nama) + '</h3>';
+    html += baris('ID Produk', esc(d.id))
+      + baris('Nama Artikel', esc(d.nama))
+      + baris('Ukuran', esc(d.ukuran))
+      + baris('Nama Pemilik', esc(d.pemilik))
+      + baris('Tanggal Beli', esc(d.tanggal))
+      + baris('Total Scan', d.totalScan + 'x');
+    if (duplikat) {
+      html += '<div class="peringatan">'
+        + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5" style="flex:none"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/></svg>'
+        + '<div><b>Peringatan:</b> Label ini sudah discan ' + d.totalScan + ' kali — melebihi batas wajar. Kemungkinan label dipalsukan atau diduplikasi. Hubungi kami via WhatsApp untuk konfirmasi.</div></div>';
+    }
+  } else if (json.status === 'found') {
+    html += '<div class="status-badge status-stok">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg>'
+      + 'Stok Resmi · Belum Aktiv</div>';
+    html += '<h3>Produk terdaftar sebagai stok resmi</h3>';
+    html += '<p style="font-size:15px;color:#555">Kode <b>' + esc(json.data.id) + '</b> terdaftar di database resmi, namun belum diaktifkan atas nama pemilik. Jika Anda baru membeli produk ini, hubungi penjual untuk aktivasi.</p>';
+  } else {
+    html += '<div class="status-badge status-palsu">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+      + 'Tidak Terdaftar</div>';
+    html += '<h3>Kode tidak terdaftar di database resmi</h3>';
+    html += '<p style="font-size:15px;color:#555">Kode yang Anda pindai tidak ditemukan. Produk berpotensi <b>palsu</b>. Hubungi kami melalui WhatsApp untuk konfirmasi keaslian.</p>';
+  }
+
+  kartu.innerHTML = html;
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({ behavior: 'smooth' });
+}
+
+function baris(label, nilai) {
+  return '<div class="data-baris"><span>' + label + '</span><span>' + (nilai || '-') + '</span></div>';
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
