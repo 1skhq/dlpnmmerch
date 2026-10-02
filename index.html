@@ -1,4 +1,4 @@
-p<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -17,7 +17,9 @@ p<!DOCTYPE html>
   header{background:var(--putih);border-bottom:1.5px solid var(--hitam);position:sticky;top:0;z-index:40}
   .nav{max-width:960px;margin:0 auto;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
   .brand{display:flex;align-items:center;gap:10px}
-  .brand-mark{width:34px;height:34px;border:1.5px solid var(--hitam);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;letter-spacing:-.02em}
+  /* --- LOGO: ganti isi .brand-mark (huruf "D") atau pakai <img> lihat komentar di HTML --- */
+  .brand-mark{width:34px;height:34px;border:1.5px solid var(--hitam);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;letter-spacing:-.02em;overflow:hidden}
+  .brand-mark img{width:100%;height:100%;object-fit:cover;display:block}
   .brand-name{font-weight:700;font-size:16px;letter-spacing:.12em;text-transform:uppercase}
   .nav-link{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--hitam);text-decoration:none;border:1.5px solid var(--hitam);padding:8px 14px}
   .nav-link:hover{background:var(--hitam);color:var(--putih)}
@@ -42,7 +44,7 @@ p<!DOCTYPE html>
   .sec-label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#777;margin-bottom:10px}
   .sec-title{font-size:clamp(28px,6vw,44px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-bottom:34px}
 
-  /* ============ KARTU VERIFIKASI (PUTIH BERSIH) ============ */
+  /* ============ KARTU VERIFIKASI ============ */
   .verify-card{background:var(--putih);border:1.5px solid var(--hitam);padding:28px;box-shadow:8px 8px 0 var(--hitam)}
   .verify-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
   .verify-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
@@ -51,29 +53,64 @@ p<!DOCTYPE html>
   .langkah span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--garis);padding:6px 10px;color:#777}
   .langkah span.on{border-color:var(--hitam);color:var(--hitam);background:var(--abu)}
   .tombol{display:flex;gap:12px;flex-wrap:wrap}
-  #reader{width:100%;border:1.5px solid var(--garis);margin-top:18px;display:none;background:var(--abu)}
-  #reader video,#reader img{width:100%!important}
-  .loading{display:none;align-items:center;gap:10px;font-size:14px;padding:14px 0}
-  .spinner{width:16px;height:16px;border:2px solid var(--garis);border-top-color:var(--hitam);border-radius:50%;animation:putar .7s linear infinite}
-  @keyframes putar{to{transform:rotate(360deg)}}
   .notice{font-size:14px;padding:14px 16px;border:1.5px solid var(--hitam);margin-bottom:18px;display:none;background:var(--abu)}
   .notice b{display:block;margin-bottom:2px}
 
-  /* ============ HASIL ============ */
-  #hasil{display:none;margin-top:22px}
-  .hasil-kartu{border:1.5px solid var(--hitam);padding:26px;background:var(--abu)}
+  /* ============ OVERLAY UMUM (FULLSCREEN) ============ */
+  .overlay{position:fixed;inset:0;z-index:100;display:none;background:var(--putih)}
+  .overlay.aktif{display:flex;flex-direction:column}
+  .tutup{position:fixed;top:calc(14px + env(safe-area-inset-top));right:14px;z-index:110;
+    width:46px;height:46px;border:1.5px solid var(--putih);background:rgba(0,0,0,.55);color:var(--putih);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);
+    font-size:26px;line-height:1;font-weight:400;transition:background .15s}
+  .tutup:hover{background:var(--hitam)}
+  .tutup-gelap{border-color:var(--hitam);background:var(--putih);color:var(--hitam)}
+  .tutup-gelap:hover{background:var(--hitam);color:var(--putih)}
+
+  /* ============ OVERLAY KAMERA (FULLSCREEN + BLUR) ============ */
+  #overlay-kamera{background:#000;transition:filter .5s ease}
+  #overlay-kamera.blur{filter:blur(14px) brightness(.7)}
+  #overlay-kamera #reader{flex:1;width:100%;background:#000}
+  #overlay-kamera video,#overlay-kamera img{width:100vw!important;height:100vh!important;object-fit:cover}
+  .scan-hint{position:fixed;bottom:calc(34px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;
+    color:var(--putih);font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;animation:hintPulse 1.6s ease infinite}
+  @keyframes hintPulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+  /* ============ OVERLAY LOADING (FULLSCREEN, animasi l18) ============ */
+  #overlay-loading{background:var(--putih);align-items:center;justify-content:center;gap:26px}
+  .loader{width:15px;aspect-ratio:1;border-radius:50%;background:#000;box-shadow:-20px 0px,20px 0px;animation:l18 1s infinite}
+  @keyframes l18{
+    25%  {box-shadow:-20px -20px, 20px 20px}
+    50%  {box-shadow:  0px -20px,  0px 20px}
+    75%  {box-shadow: 20px -20px,-20px 20px}
+    100% {box-shadow: 20px   0px,-20px   0px}
+  }
+  .loading-teks{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#777;
+    text-align:center;padding:0 20px;animation:hintPulse 1.2s ease infinite}
+
+  /* ============ OVERLAY INFO PRODUK (FULLSCREEN + ANIMASI KETIK) ============ */
+  #overlay-info{overflow-y:auto;background:var(--abu)}
+  .info-in{max-width:560px;margin:0 auto;padding:calc(70px + env(safe-area-inset-top)) 22px calc(48px + env(safe-area-inset-bottom))}
   .status-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
-    letter-spacing:.14em;text-transform:uppercase;padding:7px 13px;margin-bottom:16px}
+    letter-spacing:.14em;text-transform:uppercase;padding:7px 13px;margin-bottom:16px;opacity:0;animation:munculItem .4s ease forwards}
   .status-asli{background:var(--hitam);color:var(--putih)}
   .status-stok{border:1.5px solid var(--hitam);color:var(--hitam)}
   .status-palsu{background:var(--hitam);color:var(--putih)}
-  .hasil-kartu h3{font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.01em;margin-bottom:18px}
+  .info-in h3{font-size:clamp(26px,7vw,34px);font-weight:700;line-height:1.1;letter-spacing:-.01em;margin-bottom:22px;min-height:1.1em}
+  .info-kartu{border:1.5px solid var(--hitam);padding:24px;background:var(--putih);box-shadow:8px 8px 0 var(--hitam)}
   .data-baris{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid var(--garis);font-size:15px}
-  .data-baris span:first-child{color:#777;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding-top:4px}
-  .data-baris span:last-child{font-weight:500;text-align:right}
+  .data-baris:first-child{border-top:none}
+  .data-baris span:first-child{color:#777;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding-top:4px;flex:none}
+  .data-baris span:last-child{font-weight:500;text-align:right;min-height:1.4em}
+  .info-catatan{font-size:15px;color:#555;margin-top:6px}
   .peringatan{margin-top:18px;padding:14px 16px;border:1.5px solid var(--hitam);font-size:14px;display:flex;gap:12px;align-items:flex-start;background:var(--putih)}
+  .kursor-ketik::after{content:'▌';animation:kedip .8s steps(1) infinite;margin-left:1px}
+  @keyframes kedip{50%{opacity:0}}
+  @keyframes munculItem{to{opacity:1}}
+  .btn-tutup-info{margin-top:26px;width:100%;justify-content:center}
 
-  /* ============ CARE GUIDE (GRID 3 KOLOM) ============ */
+  /* ============ CARE GUIDE ============ */
   .care{background:var(--putih);border-top:1.5px solid var(--hitam)}
   .care-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--garis);border:1px solid var(--garis)}
   .care-item{background:var(--putih);padding:26px 22px}
@@ -117,6 +154,9 @@ p<!DOCTYPE html>
 <header>
   <div class="nav">
     <div class="brand">
+      <!-- LOGO: untuk mengganti huruf "D", cukup ubah teks di dalam div ini.
+           Untuk memakai gambar logo sendiri, ganti menjadi:
+           <div class="brand-mark"><img src="logo-anda.png" alt="DLPNM"></div> -->
       <div class="brand-mark">D</div>
       <div class="brand-name">DLPNM&nbsp;MERCH</div>
     </div>
@@ -173,16 +213,34 @@ p<!DOCTYPE html>
       </button>
       <input type="file" id="file-qr" accept="image/*" hidden onchange="prosesFile(this)">
     </div>
-
-    <div id="reader"></div>
-    <div class="loading" id="loading"><div class="spinner"></div> Memverifikasi ke database resmi…</div>
-  </div>
-
-  <!-- HASIL -->
-  <div id="hasil">
-    <div class="hasil-kartu" id="kartu-hasil"></div>
   </div>
 </section>
+
+<!-- ==================== OVERLAY KAMERA (FULLSCREEN) ==================== -->
+<div class="overlay" id="overlay-kamera">
+  <div class="tutup" onclick="tutupKamera()" aria-label="Tutup kamera">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </div>
+  <div id="reader"></div>
+  <div class="scan-hint" id="scan-hint">Arahkan kamera ke QR Code</div>
+</div>
+
+<!-- ==================== OVERLAY LOADING (FULLSCREEN) ==================== -->
+<div class="overlay" id="overlay-loading">
+  <div class="loader"></div>
+  <div class="loading-teks">Memverifikasi ke database resmi…</div>
+</div>
+
+<!-- ==================== OVERLAY INFO PRODUK (FULLSCREEN + KETIK) ==================== -->
+<div class="overlay" id="overlay-info">
+  <div class="tutup tutup-gelap" onclick="tutupInfo()" aria-label="Tutup informasi produk">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </div>
+  <div class="info-in">
+    <div id="info-konten"></div>
+    <button class="btn btn-tutup-info" onclick="tutupInfo()">Tutup</button>
+  </div>
+</div>
 
 <!-- ==================== CARE GUIDE (3 KOLOM) ==================== -->
 <div class="care" id="perawatan">
@@ -263,6 +321,7 @@ const BATAS_SCAN_WAJAR = 3;
 
 let scanner = null;
 let kameraAktif = false;
+let timerKetik = null;
 
 /* ---- TAHAP 1: tangkap ?id= dari URL lalu sembunyikan dari address bar ---- */
 (function tahapSatu() {
@@ -270,7 +329,6 @@ let kameraAktif = false;
   const id = params.get('id');
   if (id) {
     sessionStorage.setItem('qr_tahap1', id);
-    // Hapus parameter dari address bar — data "ditahan", belum ditampilkan
     window.history.replaceState({}, document.title, location.pathname);
     document.getElementById('notice-tahap1').style.display = 'block';
     document.getElementById('tag-tahap2').classList.add('on');
@@ -288,66 +346,95 @@ function ekstrakId(teks) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-/* ---- Kamera di dalam web (tahap 2) ---- */
+/* ================================================================
+   OVERLAY KAMERA — fullscreen, dengan tombol close di samping
+   ================================================================ */
 function bukaKamera() {
-  const el = document.getElementById('reader');
-  el.style.display = 'block';
+  const ov = document.getElementById('overlay-kamera');
+  ov.classList.remove('blur');
+  ov.classList.add('aktif');
+  document.getElementById('scan-hint').style.display = 'block';
   scanner = new Html5Qrcode('reader');
   scanner.start(
     { facingMode: 'environment' },
     { fps: 10, qrbox: { width: 240, height: 240 } },
-    (teks) => { matikanKamera(); jalankanVerifikasi(ekstrakId(teks)); },
+    (teks) => { deteksiBerhasil(ekstrakId(teks)); },
     () => {}
   ).then(() => { kameraAktif = true; }).catch(() => {
+    tutupKamera();
     alert('Tidak bisa membuka kamera. Pastikan izin kamera diizinkan, atau gunakan tombol Upload Gambar.');
-    el.style.display = 'none';
   });
+}
+
+function tutupKamera() {
+  matikanKamera();
+  const ov = document.getElementById('overlay-kamera');
+  ov.classList.remove('aktif', 'blur');
 }
 
 function matikanKamera() {
   if (scanner && kameraAktif) {
     scanner.stop().then(() => {
       scanner.clear(); kameraAktif = false;
-      document.getElementById('reader').style.display = 'none';
     }).catch(() => { kameraAktif = false; });
   }
+}
+
+/* ---- QR terdeteksi: getar, blur kamera, lalu lanjut verifikasi ---- */
+function deteksiBerhasil(id) {
+  if (navigator.vibrate) navigator.vibrate(80); // efek "berdebar" di HP
+  matikanKamera();
+  document.getElementById('scan-hint').style.display = 'none';
+  const ov = document.getElementById('overlay-kamera');
+  ov.classList.add('blur'); // kamera mem-blur
+  setTimeout(() => {
+    ov.classList.remove('aktif', 'blur');
+    jalankanVerifikasi(id);
+  }, 650);
 }
 
 /* ---- Upload foto QR dari galeri (tahap 2, alternatif) ---- */
 function prosesFile(input) {
   const file = input.files[0];
   if (!file) return;
-  matikanKamera();
-  const el = document.getElementById('reader');
-  el.style.display = 'none';
+  input.value = '';
   new Html5Qrcode('reader').scanFile(file, true)
     .then((teks) => { jalankanVerifikasi(ekstrakId(teks)); })
     .catch(() => { alert('QR Code tidak terbaca dari foto. Coba ambil foto lebih dekat dan lebih jelas.'); });
-  input.value = '';
 }
 
-/* ---- TAHAAP 2: verifikasi ke backend ---- */
+/* ================================================================
+   VERIFIKASI — loading fullscreen dengan animasi loader
+   ================================================================ */
 async function jalankanVerifikasi(id) {
   if (!id) { alert('QR terbaca, tetapi tidak berisi kode produk yang valid.'); return; }
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('hasil').style.display = 'none';
+  const ov = document.getElementById('overlay-loading');
+  ov.classList.add('aktif');
+  let json = null;
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'verify', id: id })
     });
-    const json = await res.json();
-    tampilkanHasil(json);
+    json = await res.json();
   } catch (e) {
+    ov.classList.remove('aktif');
     alert('Gagal terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.');
+    return;
   }
-  document.getElementById('loading').style.display = 'none';
+  // jeda kecil agar animasi loading terasa (momen "berdebar-debar")
+  await new Promise(r => setTimeout(r, 900));
+  ov.classList.remove('aktif');
+  tampilkanHasil(json);
 }
 
+/* ================================================================
+   INFO PRODUK — fullscreen + animasi ketik
+   ================================================================ */
 function tampilkanHasil(json) {
-  const kartu = document.getElementById('kartu-hasil');
-  const wrap  = document.getElementById('hasil');
+  const konten = document.getElementById('info-konten');
+  const ov = document.getElementById('overlay-info');
   let html = '';
 
   if (json.status === 'found' && json.ownerFilled) {
@@ -356,13 +443,14 @@ function tampilkanHasil(json) {
     html += '<div class="status-badge status-asli">'
       + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>'
       + 'Produk Asli &amp; Terdaftar</div>';
-    html += '<h3>' + esc(d.nama) + '</h3>';
-    html += baris('ID Produk', esc(d.id))
-      + baris('Nama Artikel', esc(d.nama))
-      + baris('Ukuran', esc(d.ukuran))
-      + baris('Nama Pemilik', esc(d.pemilik))
-      + baris('Tanggal Beli', esc(d.tanggal))
-      + baris('Total Scan', d.totalScan + 'x');
+    html += '<h3 data-ketik="' + escAttr(d.nama) + '"></h3>';
+    html += '<div class="info-kartu">';
+    html += barisKetik('ID Produk', d.id)
+      + barisKetik('Ukuran', d.ukuran)
+      + barisKetik('Nama Pemilik', d.pemilik)
+      + barisKetik('Tanggal Beli', d.tanggal)
+      + barisKetik('Total Scan', d.totalScan + 'x');
+    html += '</div>';
     if (duplikat) {
       html += '<div class="peringatan">'
         + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5" style="flex:none"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/></svg>'
@@ -372,25 +460,63 @@ function tampilkanHasil(json) {
     html += '<div class="status-badge status-stok">'
       + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg>'
       + 'Stok Resmi · Belum Aktiv</div>';
-    html += '<h3>Produk terdaftar sebagai stok resmi</h3>';
-    html += '<p style="font-size:15px;color:#555">Kode <b>' + esc(json.data.id) + '</b> terdaftar di database resmi, namun belum diaktifkan atas nama pemilik. Jika Anda baru membeli produk ini, hubungi penjual untuk aktivasi.</p>';
+    html += '<h3 data-ketik="Produk terdaftar sebagai stok resmi"></h3>';
+    html += '<p class="info-catatan info-kartu">Kode <b>' + esc(json.data.id) + '</b> terdaftar di database resmi, namun belum diaktifkan atas nama pemilik. Jika Anda baru membeli produk ini, hubungi penjual untuk aktivasi.</p>';
   } else {
     html += '<div class="status-badge status-palsu">'
       + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>'
       + 'Tidak Terdaftar</div>';
-    html += '<h3>Kode tidak terdaftar di database resmi</h3>';
-    html += '<p style="font-size:15px;color:#555">Kode yang Anda pindai tidak ditemukan. Produk berpotensi <b>palsu</b>. Hubungi kami melalui WhatsApp untuk konfirmasi keaslian.</p>';
+    html += '<h3 data-ketik="Kode tidak terdaftar di database resmi"></h3>';
+    html += '<p class="info-catatan info-kartu">Kode yang Anda pindai tidak ditemukan. Produk berpotensi <b>palsu</b>. Hubungi kami melalui WhatsApp untuk konfirmasi keaslian.</p>';
   }
 
-  kartu.innerHTML = html;
-  wrap.style.display = 'block';
-  wrap.scrollIntoView({ behavior: 'smooth' });
+  konten.innerHTML = html;
+  ov.classList.add('aktif');
+  ov.scrollTop = 0;
+  mulaiKetik();
 }
 
-function baris(label, nilai) {
-  return '<div class="data-baris"><span>' + label + '</span><span>' + (nilai || '-') + '</span></div>';
+/* ---- Animasi ketik berurutan untuk semua elemen [data-ketik] ---- */
+function mulaiKetik() {
+  hentikanKetik();
+  const target = Array.from(document.querySelectorAll('#info-konten [data-ketik]'));
+  let idx = 0;
+  function ketikEl(el) {
+    const teks = el.getAttribute('data-ketik') || '';
+    el.textContent = '';
+    el.classList.add('kursor-ketik');
+    let i = 0;
+    function langkah() {
+      if (i <= teks.length) {
+        el.textContent = teks.slice(0, i);
+        i++;
+        timerKetik = setTimeout(langkah, 22);
+      } else {
+        el.classList.remove('kursor-ketik');
+        idx++;
+        if (idx < target.length) ketikEl(target[idx]);
+      }
+    }
+    langkah();
+  }
+  if (target.length) ketikEl(target[0]);
+}
+
+function hentikanKetik() {
+  if (timerKetik) { clearTimeout(timerKetik); timerKetik = null; }
+}
+
+function tutupInfo() {
+  hentikanKetik();
+  document.getElementById('overlay-info').classList.remove('aktif');
+}
+
+/* ---- Helper ---- */
+function barisKetik(label, nilai) {
+  return '<div class="data-baris"><span>' + label + '</span><span data-ketik="' + escAttr(nilai || '-') + '"></span></div>';
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s) { return esc(s); }
 </script>
 </body>
 </html>
