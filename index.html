@@ -356,7 +356,13 @@ function bukaKamera() {
   scanner = new Html5Qrcode('reader');
   scanner.start(
     { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 240, height: 240 } },
+    {
+      fps: 10,
+      qrbox: (vw, vh) => {
+        const size = Math.min(Math.floor(vw * 0.8), 300);
+        return { width: size, height: size };
+      }
+    },
     (teks) => { deteksiBerhasil(ekstrakId(teks)); },
     () => {}
   ).then(() => { kameraAktif = true; }).catch(() => {
@@ -364,7 +370,6 @@ function bukaKamera() {
     alert('Tidak bisa membuka kamera. Pastikan izin kamera diizinkan, atau gunakan tombol Upload Gambar.');
   });
 }
-
 function tutupKamera() {
   matikanKamera();
   const ov = document.getElementById('overlay-kamera');
