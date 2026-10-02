@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Product Authenticity Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  :root{ --hitam:#000000; --putih:#FFFFFF; --abu:#F7F7F7; --garis:#E5E5E5; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Space Grotesk',sans-serif;background:var(--putih);color:var(--hitam);line-height:1.6}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;justify-content:space-between;align-items:center;padding:4px 0 36px}
+  .logo{font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+  .logo span{border:1.5px solid var(--hitam);padding:2px 8px}
+  h1{font-size:clamp(34px,9vw,48px);font-weight:700;line-height:1.04;letter-spacing:-.02em;margin-bottom:10px}
+  h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .sub{color:#666;font-size:15px;margin-bottom:36px}
+  section{margin-bottom:48px}
+  .kotak{background:var(--abu);border:1.5px solid var(--hitam);padding:22px}
+
+  .btn{font-family:inherit;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+    padding:13px 20px;border:1.5px solid var(--hitam);background:var(--putih);color:var(--hitam);cursor:pointer;
+    display:inline-flex;align-items:center;gap:9px;transition:background .15s,color .15s}
+  .btn:hover{background:var(--hitam);color:var(--putih)}
+  .btn-utama{background:var(--hitam);color:var(--putih)}
+  .btn-kecil{padding:8px 13px;font-size:11px}
+
+  label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#777;margin:14px 0 5px}
+  input,select{width:100%;font-family:inherit;font-size:16px;padding:13px 14px;border:1.5px solid var(--hitam);
+    background:var(--putih);color:var(--hitam);border-radius:0;appearance:none}
+  input:focus,select:focus{outline:2px solid var(--hitam)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:520px){.grid2{grid-template-columns:1fr}}
+
+  .notice{font-size:14px;padding:13px 15px;border:1.5px solid var(--garis);margin-top:14px;display:none}
+  .notice b{display:block}
+  .notice.aman{border-color:var(--hitam)}
+  .notice.bahaya{background:var(--hitam);color:var(--putih)}
+
+  #reader{width:100%;border:1.5px solid var(--garis);margin-top:14px;display:none}
+  #reader video,#reader img{width:100%!important}
+
+  /* Login overlay */
+  #gate{position:fixed;inset:0;background:var(--putih);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+  .gate-kotak{width:100%;max-width:360px;border:1.5px solid var(--hitam);padding:32px;background:var(--abu)}
+  .gate-kotak h1{font-size:30px}
+  .gate-err{color:#000;font-size:13px;margin-top:10px;display:none;font-weight:700}
+
+  /* Tabel */
+  .cari{margin-bottom:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#777;text-align:left;
+    padding:9px 8px;border-bottom:1.5px solid var(--hitam)}
+  td{padding:10px 8px;border-bottom:1px solid var(--garis);vertical-align:top}
+  td.kosong{color:#999;font-style:italic}
+  .wrap-tabel{overflow-x:auto;border:1px solid var(--garis)}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .info-jumlah{font-size:12px;color:#777;margin-left:auto}
+
+  /* QR Tool */
+  #qr-img{width:100%;max-width:280px;border:1.5px solid var(--hitam);background:var(--putih);display:none;margin:16px 0}
+  .url-box{display:flex;gap:8px;margin-top:12px}
+  .url-box input{flex:1;font-size:13px}
+
+  .loading{display:none;align-items:center;gap:10px;font-size:14px;padding:12px 0}
+  .spinner{width:15px;height:15px;border:2px solid var(--garis);border-top-color:var(--hitam);border-radius:50%;animation:putar .7s linear infinite}
+  @keyframes putar{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--hitam);color:var(--putih);
+    padding:13px 22px;font-size:13px;font-weight:700;z-index:99;display:none;max-width:90vw}
+</style>
+</head>
+<body>
+
+<!-- ===================== GERBANG LOGIN PIN ===================== -->
+<div id="gate">
+  <div class="gate-kotak">
+    <h1>ADMIN.</h1>
+    <p style="font-size:13px;color:#666;margin:6px 0 22px">Masukkan PIN untuk mengelola database produk.</p>
+    <input type="password" id="pin-input" inputmode="numeric" placeholder="PIN Admin" onkeydown="if(event.key==='Enter')login()">
+    <div class="gate-err" id="gate-err">PIN salah. Coba lagi.</div>
+    <button class="btn btn-utama" style="width:100%;margin-top:16px;justify-content:center" onclick="login()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Masuk
+    </button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div class="logo"><span>ADMIN</span></div>
+    <button class="btn btn-kecil" onclick="logout()">Keluar</button>
+  </header>
+
+  <h1>KELOLA DATA PRODUK.</h1>
+  <p class="sub">Scan label untuk input, edit data pemilik, dan buat QR Code baru siap cetak.</p>
+
+  <!-- ============ SCAN LABEL UNTUK INPUT ============ -->
+  <section>
+    <div class="kotak">
+      <h2>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18"/></svg>
+        Scan Label Produk
+      </h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-utama" onclick="bukaKameraAdmin()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Buka Kamera
+        </button>
+        <button class="btn" onclick="document.getElementById('file-qr-admin').click()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Upload Foto
+        </button>
+        <input type="file" id="file-qr-admin" accept="image/*" hidden onchange="prosesFileAdmin(this)">
+      </div>
+      <div id="reader-admin"></div>
+      <div class="notice" id="notice-scan"></div>
+    </div>
+  </section>
+
+  <!-- ============ FORM INPUT / EDIT ============ -->
+  <section>
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      Form Data Pemilik
+    </h2>
+    <div class="kotak">
+      <label>ID Produk (otomatis dari scan)</label>
+      <input type="text" id="f-id" placeholder="Contoh: AUTH-001">
+      <div class="grid2">
+        <div><label>Nama Artikel</label><input type="text" id="f-nama" placeholder="Contoh: Tee — White Logo"></div>
+        <div><label>Ukuran</label>
+          <select id="f-ukuran">
+            <option value="">— Pilih —</option><option>S</option><option>M</option><option>L</option>
+            <option>XL</option><option>XXL</option><option>All Size</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div><label>Nama Pemilik</label><input type="text" id="f-pemilik" placeholder="Nama pembeli"></div>
+        <div><label>Tanggal Beli</label><input type="date" id="f-tanggal"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <button class="btn btn-utama" onclick="simpan()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+          Simpan Data
+        </button>
+        <button class="btn" onclick="formBaru()">+ Tambah Data Baru</button>
+      </div>
+      <div class="loading" id="loading-form"><div class="spinner"></div> Menyimpan…</div>
+    </div>
+  </section>
+
+  <!-- ============ TABEL DATA ============ -->
+  <section>
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      Data Produk &amp; Pemilik
+    </h2>
+    <div class="cari">
+      <input type="text" id="cari" placeholder="Cari ID Produk atau Nama Pemilik…" oninput="renderTabel()">
+    </div>
+    <div class="wrap-tabel">
+      <table>
+        <thead><tr><th>ID</th><th>Artikel</th><th>Uk.</th><th>Pemilik</th><th>Tgl Beli</th><th>Scan</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-kecil" id="btn-semua" onclick="tampilkanSemua()">Tampilkan Semua</button>
+      <span class="info-jumlah" id="info-jumlah"></span>
+    </div>
+    <div class="loading" id="loading-tabel"><div class="spinner"></div> Memuat data…</div>
+  </section>
+
+  <!-- ============ PEMBUAT QR CODE ============ -->
+  <section>
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M18 18h3v3h-3z"/></svg>
+      Pembuat Link &amp; QR Code
+    </h2>
+    <div class="kotak">
+      <label>Ketik kode seri baru</label>
+      <input type="text" id="qr-kode" placeholder="Contoh: AUTH-014" oninput="buatQR()">
+      <div class="url-box">
+        <input type="text" id="qr-url" readonly placeholder="URL akan muncul di sini">
+        <button class="btn btn-kecil" onclick="salinURL()">Salin</button>
+      </div>
+      <img id="qr-img" alt="QR Code">
+      <button class="btn btn-utama" id="btn-unduh" style="display:none" onclick="unduhQR()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+        Download QR Code (PNG)
+      </button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   KONFIGURASI — WAJIB DIGANTI dengan URL Web App Google Apps Script
+   ================================================================ */
+const API_URL = 'PASTE_WEB_APP_URL_DISINI';
+
+let pinAdmin = '';
+let semuaData = [];
+let tampilSemua = false;
+let scanner = null, kameraAktif = false;
+
+/* ===================== LOGIN ===================== */
+async function login() {
+  const pin = document.getElementById('pin-input').value.trim();
+  if (!pin) return;
+  const json = await api({ action: 'login', pin: pin });
+  if (json.valid) {
+    pinAdmin = pin;
+    localStorage.setItem('auth_pin', pin); // sesi tersimpan, tak perlu login ulang
+    bukaApp();
+  } else {
+    document.getElementById('gate-err').style.display = 'block';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('auth_pin');
+  location.reload();
+}
+
+function bukaApp() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('f-tanggal').valueAsDate = new Date();
+  muatData();
+}
+
+/* Cek sesi tersimpan saat halaman dibuka */
+(async function cekSesi() {
+  const tersimpan = localStorage.getItem('auth_pin');
+  if (tersimpan) {
+    const json = await api({ action: 'login', pin: tersimpan });
+    if (json.valid) { pinAdmin = tersimpan; bukaApp(); return; }
+    localStorage.removeItem('auth_pin');
+  }
+})();
+
+/* ===================== API HELPER ===================== */
+async function api(payload) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (e) {
+    alert('Gagal terhubung ke server. Periksa koneksi internet.');
+    return { ok: false };
+  }
+}
+
+/* ===================== SCAN LABEL (ADMIN) ===================== */
+function ekstrakId(teks) {
+  teks = String(teks).trim();
+  try { const u = new URL(teks); if (u.searchParams.get('id')) return u.searchParams.get('id'); } catch (e) {}
+  const m = teks.match(/[?&]id=([^&\s]+)/i);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function bukaKameraAdmin() {
+  const el = document.getElementById('reader-admin');
+  el.style.display = 'block';
+  scanner = new Html5Qrcode('reader-admin');
+  scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
+    (teks) => { matikanKameraAdmin(); prosesHasilScan(ekstrakId(teks)); }, () => {})
+    .then(() => { kameraAktif = true; })
+    .catch(() => { alert('Tidak bisa membuka kamera. Gunakan Upload Foto.'); el.style.display = 'none'; });
+}
+
+function matikanKameraAdmin() {
+  if (scanner && kameraAktif) {
+    scanner.stop().then(() => { scanner.clear(); kameraAktif = false; document.getElementById('reader-admin').style.display = 'none'; }).catch(() => {});
+  }
+}
+
+function prosesFileAdmin(input) {
+  const file = input.files[0];
+  if (!file) return;
+  matikanKameraAdmin();
+  document.getElementById('reader-admin').style.display = 'none';
+  new Html5Qrcode('reader-admin').scanFile(file, true)
+    .then((teks) => prosesHasilScan(ekstrakId(teks)))
+    .catch(() => alert('QR tidak terbaca. Coba foto lebih jelas dan dekat.'));
+  input.value = '';
+}
+
+async function prosesHasilScan(id) {
+  if (!id) { alert('QR terbaca tetapi tidak berisi kode produk.'); return; }
+  document.getElementById('f-id').value = id;
+  const n = document.getElementById('notice-scan');
+  n.style.display = 'block';
+  n.className = 'notice';
+  n.innerHTML = '<b>Memeriksa status…</b>';
+  const json = await api({ action: 'check_item', pin: pinAdmin, id: id });
+  if (json.status === 'ada_pemilik') {
+    n.className = 'notice bahaya';
+    n.innerHTML = '<b>⚠ Sudah terdaftar atas nama pemilik:</b> ' + esc(json.data.pemilik) +
+      '. Data bisa ditimpa jika Anda sengaja mengedit — form sudah terisi, periksa sebelum simpan.';
+    isiForm(json.data);
+  } else if (json.status === 'stok_kosong') {
+    n.className = 'notice aman';
+    n.innerHTML = '<b>Stok valid.</b> Kode sudah ada di database dan siap diisi nama pemilik.';
+    isiForm(json.data);
+  } else {
+    n.className = 'notice';
+    n.innerHTML = '<b>Kode belum ada di database.</b> Sistem akan otomatis membuat baris baru saat Anda menekan Simpan.';
+  }
+}
+
+function isiForm(d) {
+  document.getElementById('f-id').value = d.id || '';
+  document.getElementById('f-nama').value = d.nama || '';
+  document.getElementById('f-ukuran').value = d.ukuran || '';
+  document.getElementById('f-pemilik').value = d.pemilik || '';
+  if (d.tanggal) document.getElementById('f-tanggal').value = d.tanggal;
+}
+
+function formBaru() {
+  ['f-id','f-nama','f-pemilik'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('f-ukuran').value = '';
+  document.getElementById('f-tanggal').valueAsDate = new Date();
+  document.getElementById('notice-scan').style.display = 'none';
+}
+
+/* ===================== SIMPAN / EDIT ===================== */
+async function simpan() {
+  const id = document.getElementById('f-id').value.trim();
+  if (!id) { alert('ID Produk wajib diisi (scan label atau ketik manual).'); return; }
+  document.getElementById('loading-form').style.display = 'flex';
+  const json = await api({
+    action: 'save_owner', pin: pinAdmin,
+    id: id,
+    nama: document.getElementById('f-nama').value.trim(),
+    ukuran: document.getElementById('f-ukuran').value,
+    pemilik: document.getElementById('f-pemilik').value.trim(),
+    tanggal: document.getElementById('f-tanggal').value
+  });
+  document.getElementById('loading-form').style.display = 'none';
+  if (json.ok) { toast(json.pesan); muatData(); }
+  else alert(json.pesan || 'Gagal menyimpan.');
+}
+
+/* ===================== TABEL DATA ===================== */
+async function muatData() {
+  document.getElementById('loading-tabel').style.display = 'flex';
+  const json = await api({ action: 'get_data', pin: pinAdmin });
+  document.getElementById('loading-tabel').style.display = 'none';
+  if (json.ok) { semuaData = json.daftar; renderTabel(); }
+}
+
+function renderTabel() {
+  const q = document.getElementById('cari').value.trim().toLowerCase();
+  let data = semuaData.filter(d =>
+    !q || d.id.toLowerCase().includes(q) || d.pemilik.toLowerCase().includes(q));
+  const total = data.length;
+  if (!tampilSemua) data = data.slice(-30).reverse(); // 30 terbaru
+  else data = data.slice().reverse();
+
+  const tb = document.getElementById('tbody');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="kosong">Belum ada data.</td></tr>';
+  } else {
+    tb.innerHTML = data.map(d =>
+      '<tr><td><b>' + esc(d.id) + '</b></td><td>' + esc(d.nama) + '</td><td>' + esc(d.ukuran) + '</td>' +
+      '<td>' + esc(d.pemilik || '—') + '</td><td>' + esc(d.tanggal || '—') + '</td><td>' + d.totalScan + '</td>' +
+      '<td><button class="btn btn-kecil" onclick=\'editDariTabel("' + esc(d.id) + '")\'>Edit</button></td></tr>'
+    ).join('');
+  }
+  document.getElementById('info-jumlah').textContent =
+    tampilSemua ? ('Menampilkan semua ' + total + ' data') : ('30 terbaru dari ' + total + ' data');
+  document.getElementById('btn-semua').style.display = tampilSemua ? 'none' : 'inline-flex';
+}
+
+function tampilkanSemua() { tampilSemua = true; renderTabel(); }
+
+function editDariTabel(id) {
+  const d = semuaData.find(x => x.id === id);
+  if (d) {
+    isiForm(d);
+    document.getElementById('notice-scan').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+/* ===================== PEMBUAT QR ===================== */
+function urlDariKode(kode) {
+  // Otomatis memakai domain tempat admin.html berada (domain Vercel Anda)
+  return location.origin + '/?id=' + encodeURIComponent(kode);
+}
+
+let qrDataURL = '';
+function buatQR() {
+  const kode = document.getElementById('qr-kode').value.trim();
+  const img = document.getElementById('qr-img');
+  const btn = document.getElementById('btn-unduh');
+  if (!kode) { img.style.display = 'none'; btn.style.display = 'none'; document.getElementById('qr-url').value = ''; return; }
+  const url = urlDariKode(kode);
+  document.getElementById('qr-url').value = url;
+  QRCode.toDataURL(url, { width: 600, margin: 2, color: { dark: '#000000', light: '#FFFFFF' } },
+    (err, dataURL) => {
+      if (err) return;
+      qrDataURL = dataURL;
+      img.src = dataURL;
+      img.style.display = 'block';
+      btn.style.display = 'inline-flex';
+    });
+}
+
+function salinURL() {
+  const url = document.getElementById('qr-url').value;
+  if (!url) { alert('Ketik kode seri dulu.'); return; }
+  navigator.clipboard.writeText(url).then(() => toast('URL disalin ke clipboard'))
+    .catch(() => { document.getElementById('qr-url').select(); document.execCommand('copy'); toast('URL disalin'); });
+}
+
+function unduhQR() {
+  const kode = document.getElementById('qr-kode').value.trim();
+  if (!qrDataURL) return;
+  const a = document.createElement('a');
+  a.href = qrDataURL;
+  a.download = 'QR-' + kode + '.png';
+  a.click();
+  toast('QR Code diunduh');
+}
+
+/* ===================== UTIL ===================== */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2600);
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
